@@ -40,7 +40,7 @@ def GetListings():
 
   results = []
 
-  for x in listings_items:
+  for x in listings_items[0:5]:
     try:
       http = urllib3.PoolManager()
       page = http.request("GET", EXPOSE_URL.format(x))
@@ -102,6 +102,7 @@ def GetListings():
       result['monthly'] = monthly
 
       results.append(result)
+
 
     except Exception as e:
       print(x)

@@ -4,6 +4,10 @@ import re
 from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
 import os
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 
@@ -12,7 +16,7 @@ BASE_URL = 'https://www.immobilienscout24.de/Suche/de/baden-wuerttemberg/karlsru
 app = Flask(__name__)
 app.config['CORS_HEADERS'] = 'Content-Type'
 cors = CORS(app, resources={r"*": {"origins": os.environ.get('WEB')}})
-
+driver = webdriver.Remote(os.environ.get('BROWSER'), DesiredCapabilities.FIREFOX)
 @app.route('/')
 def GetListingsRoute():
     result = GetListings()
@@ -80,14 +84,22 @@ def GetListings():
       except Exception as e:
         src = ''
 
+      try:
+        driver.get(EXPOSE_URL.format(x))
+        monthly = WebDriverWait(driver,10).until(
+              lambda x: x.find_element_by_xpath("//p[@class='average-rates-monthly-rate']"))
+        monthly = int(monthly.text.split(' ')[0].replace('.', ''))
+
+      except Exception as e:
+        monthly = ''
+
       result = {}
       result['url'] = EXPOSE_URL.format(x)
       result['src'] = src
       result['provision'] = provision
       result['price'] = price
       result['size'] = size
-
-      print(result)
+      result['monthly'] = monthly
 
       results.append(result)
 
@@ -99,4 +111,12 @@ def GetListings():
 if __name__ == "__main__":
   print(GetListings())
 
+  '''
+  http = urllib3.PoolManager()
+  page = http.request("GET", 'https://www.immobilienscout24.de/expose/121136183#/')
+  soup = BeautifulSoup(page.data, features="lxml")
+  print(soup)
+  a = soup.find('div', class_="offers-content")
+  print(a)
+  '''
 
